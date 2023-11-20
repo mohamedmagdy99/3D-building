@@ -38,7 +38,7 @@ const Building: React.FC = () => {
     const controls = new OrbitControls(camera, renderer.domElement);
 
     camera.position.z = 10;
-    controls.enableDamping = true; // an animation loop is required when damping
+    controls.enableDamping = true;
 
     const animate = () => {
       requestAnimationFrame(animate);
