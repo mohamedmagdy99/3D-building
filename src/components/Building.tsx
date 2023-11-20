@@ -29,7 +29,7 @@ const Building: React.FC = () => {
       const floor = new THREE.Mesh(geometry, material);
 
       floor.position.y = i * 2; // Adjust the vertical position of each floor
-      floor.userData = { floorNumber: i + 1 }; // Store floor number in user data
+      floor.userData = { floorNumber: i }; // Store floor number in user data
 
       floors.push(floor);
       scene.add(floor);
