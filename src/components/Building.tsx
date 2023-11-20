@@ -7,6 +7,10 @@ const Building: React.FC = () => {
   const buildingRef = useRef<HTMLDivElement>(null);
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const [pins, setPins] = useState<{ x: number; y: number; text: string }[]>(
+    []
+  );
+  const [newPinText, setNewPinText] = useState<string>("");
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -28,8 +32,8 @@ const Building: React.FC = () => {
       const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
       const floor = new THREE.Mesh(geometry, material);
 
-      floor.position.y = i * 2; // Adjust the vertical position of each floor
-      floor.userData = { floorNumber: i }; // Store floor number in user data
+      floor.position.y = i * 2;
+      floor.userData = { floorNumber: i };
 
       floors.push(floor);
       scene.add(floor);
@@ -71,10 +75,44 @@ const Building: React.FC = () => {
     return () => {
       window.removeEventListener("click", handleFloorClick);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const closeModal = () => {
     setModalIsOpen(false);
+  };
+
+  const makePinDraggable = (index: number) => (event: React.MouseEvent) => {
+    event.preventDefault();
+
+    const rect = buildingRef.current!.getBoundingClientRect();
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const updatedPins = [...pins];
+      updatedPins[index] = { ...updatedPins[index], x, y };
+      setPins(updatedPins);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const addPin = (event: React.MouseEvent) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (newPinText.trim() !== "") {
+      setPins([...pins, { x, y, text: newPinText }]);
+      setNewPinText("");
+    }
   };
 
   return (
@@ -86,6 +124,51 @@ const Building: React.FC = () => {
         contentLabel="Floor Photo Modal"
       >
         <img src={require("./floor.png")} alt={`Floor ${selectedFloor}`} />
+        {pins.map((pin, index) => (
+          <div
+            key={index}
+            style={{
+              position: "absolute",
+              left: `${pin.x}px`,
+              top: `${pin.y}px`,
+              width: "auto",
+              height: "auto",
+              backgroundColor: "red",
+              borderRadius: "8px",
+              padding: "5px",
+              cursor: "move",
+              userSelect: "none",
+              zIndex: 1,
+            }}
+            onMouseDown={makePinDraggable(index)}
+          >
+            {pin.text}
+          </div>
+        ))}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "auto",
+            height: "auto",
+            backgroundColor: "blue",
+            borderRadius: "8px",
+            padding: "5px",
+            cursor: "pointer",
+            userSelect: "none",
+            zIndex: 1,
+          }}
+          onMouseDown={addPin}
+        >
+          {newPinText}
+        </div>
+        <input
+          type="text"
+          value={newPinText}
+          onChange={(e) => setNewPinText(e.target.value)}
+        />
         <button onClick={closeModal}>Close</button>
       </Modal>
     </div>
